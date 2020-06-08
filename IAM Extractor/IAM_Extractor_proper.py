@@ -7,11 +7,6 @@ MARKER = ''
 FILENAME = "TEST.csv"
 # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/iam.html
 
-def TruncateLastTwoCharacters (input):
-    input = input[:-1]
-    input = input[:-1]
-    return input
-
 def concatTagValues(dataList):
     for i in dataList:
         Key = i['Key']
@@ -23,6 +18,10 @@ def concatTagValues(dataList):
 def concatPolicyNames(policyList):
     separator = ', '
     return separator.join(policyList)
+
+def concatListNonString(List):
+    separator = ', '
+    return separator.join(map(str, List))
 
 # Input: List of dictionaries | Output: List of values from 'PolicyName' Key
 def extractValueFromListDictionaryPair(policyList, Key):
@@ -43,6 +42,21 @@ class User:
             MaxItems=MAX_ITEMS
         )
         return response
+
+    def list_groups_for_user(self, username):
+        response = client.list_groups_for_user(
+            UserName=username,
+            # Marker='string',
+            MaxItems=MAX_ITEMS
+        )
+        userGroups = response['Groups']
+        if len(userGroups):
+            listOfGroups = extractValueFromListDictionaryPair(userGroups, 'GroupName')
+            listOfGroups = concatPolicyNames(listOfGroups)
+        else:
+            listOfGroups = "EMPTY"
+        return listOfGroups
+
     
     def list_user_inline_policies(self, username):
         response = client.list_user_policies(
@@ -70,12 +84,32 @@ class User:
         else:
             return "EMPTY"
 
+    def list_access_public_keys(self, username):
+        response = client.list_access_keys(
+            UserName=username,
+            # Marker='string',
+            MaxItems=MAX_ITEMS
+        )
+        myAccessKeys = response['AccessKeyMetadata']
+        if len(myAccessKeys):
+            numOfAccessKeys = len(myAccessKeys)
+            listOfAccessKeyId = extractValueFromListDictionaryPair(myAccessKeys, 'AccessKeyId')
+            listOfAccessKeyIdStatus = extractValueFromListDictionaryPair(myAccessKeys, 'Status')
+            listOfAccessKeyCreationDate = extractValueFromListDictionaryPair(myAccessKeys, 'CreateDate')
+            publicKeyIds = concatPolicyNames(listOfAccessKeyId)
+            publicKeyIdStatus = concatPolicyNames(listOfAccessKeyIdStatus)
+            publicKeyCreationDates = concatListNonString(listOfAccessKeyCreationDate)
+            return numOfAccessKeys, publicKeyIds, publicKeyIdStatus, publicKeyCreationDates
+        else:
+            return 0, "EMPTY", "EMPTY", "EMPTY"
+            
+
+
     def list_all_users_info_to_csv(self, response):
-        writer.writerow(['UserName', 'UserId', 'Arn', 'CreateDate', 'PasswordLastUsed', 'PermissonsBoundaryType', 'PermissonsBoundaryArn', 'Tags', 'Inline Policies', 'Managed Policies'])
+        writer.writerow(['UserName', 'UserId', 'Arn', 'CreateDate', 'PasswordLastUsed', 'PermissonsBoundaryType', 'PermissonsBoundaryArn', 'Tags', 'Inline Policies', 'Managed Policies', 'Groups', 'Number of SSH Keys', 'Public Key IDs', 'Public Key Status', 'Public Key Upload Dates'])
         allUserInfo = response['Users']
         if len(allUserInfo):
             for i in allUserInfo:
-                print (i)
                 userName = i['UserName']
                 userId = i['UserId']
                 arn = i['Arn']
@@ -100,10 +134,11 @@ class User:
 
                 myInlinePolicies = self.list_user_inline_policies(userName)
                 myManagedPolicies = self.list_user_managed_policies(userName)
-
-                writer.writerow([userName, userId, arn, createDate, passwordLastUsed, permissionBoundaryType, permissionBoundaryArn, tags, myInlinePolicies, myManagedPolicies])
+                myGroups = self.list_groups_for_user(userName)
+                numOfAccessKeys, publicKeyIds, publicKeyIdStatus, publicKeyCreationDates = self.list_access_public_keys(userName)
+                writer.writerow([userName, userId, arn, createDate, passwordLastUsed, permissionBoundaryType, permissionBoundaryArn, tags, myInlinePolicies, myManagedPolicies, myGroups, numOfAccessKeys, publicKeyIds, publicKeyIdStatus, publicKeyCreationDates])
         else:
-            writer.writerow(['EMPTY']*8)
+            writer.writerow(['EMPTY']*15)
 
         writer.writerow([])   # Write an empty row at end
    
@@ -119,5 +154,6 @@ if __name__ == "__main__":
         user = User(client, writer)
         allUsers = user.list_all_users()
         user.list_all_users_info_to_csv(allUsers)
-
+        print("Saved to " + FILENAME)    
+    print ("Extraction Complete")
 
