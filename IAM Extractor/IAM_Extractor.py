@@ -4,7 +4,7 @@ import csv
 MAX_ITEMS = 300
 PATH_PREFIX = ''
 MARKER = ''
-FILENAME = "TEST.csv"
+
 # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/iam.html
 
 def concatTagValues(dataList):
@@ -291,6 +291,9 @@ class Policies:
 
 if __name__ == "__main__":
     client = boto3.client('iam')
+    print ("Input CSV File name: ")
+    FILENAME = input()
+    FILENAME = FILENAME + ".csv"
     with open(FILENAME, 'w', newline='') as csvfile:
         writer = csv.writer(csvfile)
         print('Beginning to obtain user info...')
