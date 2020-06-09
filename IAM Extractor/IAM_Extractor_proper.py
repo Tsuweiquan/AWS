@@ -240,7 +240,50 @@ class Groups:
 
 
 
-# class Policies:
+class Policies:
+    def __init__(self, client, csvWriter):
+        self.client = client
+        self.csvWriter = csvWriter
+
+    def list_all_local_policies(self):
+        response = client.list_policies(
+            Scope='Local',
+            OnlyAttached=False,
+            # PathPrefix='string',
+            # PolicyUsageFilter='PermissionsPolicy'|'PermissionsBoundary',
+            # Marker='string',
+            MaxItems=MAX_ITEMS
+        )
+        return response
+
+    def get_policy_document(self, policyArn, versionId):
+        response = client.get_policy_version(
+            PolicyArn = policyArn,
+            VersionId = versionId
+        )
+        policyDetails = response['PolicyVersion']
+        return policyDetails['Document']
+
+    def list_all_local_policies_to_csv(self, response):
+        allPolicies = response['Policies']
+        writer.writerow(['Policy Name', 'Policy Id', 'Attachment Count', 'Policy Description', 'Policy Document'])
+        if len(allPolicies):
+            for i in allPolicies:
+                policyName = i['PolicyName']
+                policyId = i['PolicyId']
+                attachmentCount = i['AttachmentCount']
+                try:
+                    policyDescription = i['Description']
+                except KeyError:
+                    policyDescription = "Empty"
+                policyArn = i['Arn']
+                policyVersionId = i['DefaultVersionId']
+                policyDocument = self.get_policy_document(policyArn, policyVersionId)
+                writer.writerow([policyName, policyId, attachmentCount, policyDescription, policyDocument])
+        else:
+            writer.writerow(["EMPTY"]*5)
+        writer.writerow([])
+
 
 # class Roles:
 
@@ -260,9 +303,16 @@ if __name__ == "__main__":
         print('Beginning to obtain group info...')
         groups = Groups(client, writer)
         allGroups = groups.list_all_groups()
-        print('Obtained Users Info Successfully!')
+        print('Obtained Groups Info Successfully!')
         groups.list_all_groups_to_csv(allGroups)
-        print("Saved to " + FILENAME)
+        print('Extracted Group Info from AWS IAM Successfully!')
 
+        print('Beginning to obtain Policies info...')
+        policies = Policies(client, writer)
+        allPolicies = policies.list_all_local_policies()
+        policies.list_all_local_policies_to_csv(allPolicies)
+        print('Extracted Policies Info from AWS IAM Successfully!')
+
+    print("Saved to " + FILENAME)
     print ("Extraction Complete")
 
