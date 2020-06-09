@@ -1,9 +1,8 @@
+# Written by Tsu Wei Quan
 import boto3
 import csv
 
 MAX_ITEMS = 300
-PATH_PREFIX = ''
-MARKER = ''
 
 # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/iam.html
 
