@@ -176,11 +176,69 @@ class User:
                 numSignedCerts, certificateIds, certificateBody, certificateStatus, certificateUploadDate = self.list_user_signing_certificates(userName)
                 writer.writerow([userName, userId, arn, createDate, passwordLastUsed, permissionBoundaryType, permissionBoundaryArn, tags, myInlinePolicies, myManagedPolicies, myGroups, numOfAccessKeys, publicKeyIds, publicKeyIdStatus, publicKeyCreationDates, numOfMFADevices, MFADevices, MFADevicesEnabledDate, numSignedCerts, certificateIds, certificateBody, certificateStatus, certificateUploadDate])
         else:
-            writer.writerow(['EMPTY']*18)
+            writer.writerow(['EMPTY']*23)
 
         writer.writerow([])   # Write an empty row at end
    
-# class Groups:
+class Groups:
+    def __init__(self, client, csvWriter):
+        self.client = client
+        self.csvWriter = csvWriter
+    
+    def list_all_groups(self):
+        response = client.list_groups(
+            # PathPrefix='string',
+            # Marker='string',
+            MaxItems = MAX_ITEMS
+        )
+        return response
+
+    def list_of_group_inline_policies(self, groupname):
+        response = client.list_group_policies(
+            GroupName = groupname,
+            # Marker='string',
+            MaxItems = MAX_ITEMS
+        )
+        allMyInlinePolicies = response['PolicyNames']
+        if len(allMyInlinePolicies):
+            return concatListToString(allMyInlinePolicies)
+        else:
+            return "EMPTY"
+
+    def list_of_group_managed_policies(self, groupname):
+        response = client.list_attached_group_policies(
+            GroupName=groupname,
+            # PathPrefix='string',
+            # Marker='string',
+            MaxItems=MAX_ITEMS
+        )
+        allMyManagedPolicies = response['AttachedPolicies']
+        if len(allMyManagedPolicies):
+            managedPoliciesPolicyName = extractValueFromListDictionaryPair(allMyManagedPolicies, 'PolicyName')
+            return concatListToString(managedPoliciesPolicyName)
+        else:
+            return "EMPTY"
+
+    def list_all_groups_to_csv(self, response):
+        writer.writerow(['Group Name', 'Group ID', 'Group Arn', 'Group Create Date', 'Group Inline Policies', 'Group Managed Policies'])
+        allGroups = response['Groups']
+        if len(response):
+            for i in allGroups:
+                groupName = i['GroupName']
+                groupId = i['GroupId']
+                groupArn = i['Arn']
+                groupCreateDate = i['CreateDate']
+                # Inline Policies
+                groupInlinePolicies = self.list_of_group_inline_policies(groupName)
+                # Managed Policies
+                groupManagedPolicies = self.list_of_group_managed_policies(groupName)
+                
+                writer.writerow([groupName, groupId, groupArn, groupCreateDate, groupInlinePolicies, groupManagedPolicies])
+        else:
+            writer.writerow(['EMPTY']*6)
+        writer.writerow([]) # write a empty row at end
+
+
 
 # class Policies:
 
@@ -192,9 +250,19 @@ if __name__ == "__main__":
     client = boto3.client('iam')
     with open(FILENAME, 'w', newline='') as csvfile:
         writer = csv.writer(csvfile)
+        print('Beginning to obtain user info...')
         user = User(client, writer)
         allUsers = user.list_all_users()
+        print('Obtained Users Info Successfully!')
         user.list_all_users_info_to_csv(allUsers)
-        print("Saved to " + FILENAME)    
+        print('Extracted User Info from AWS IAM Successfully!')
+
+        print('Beginning to obtain group info...')
+        groups = Groups(client, writer)
+        allGroups = groups.list_all_groups()
+        print('Obtained Users Info Successfully!')
+        groups.list_all_groups_to_csv(allGroups)
+        print("Saved to " + FILENAME)
+
     print ("Extraction Complete")
 
