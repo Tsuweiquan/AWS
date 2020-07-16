@@ -745,7 +745,7 @@ class User:
             certificateIds = concatListToString(listOfCertificateId)
             certificateBody = concatListToString(listOfCertificateBody)
             certificateStatus = concatListToString(listOfCertificateStatus)
-            certificateUploadDate = concatListToString(listOfCertificateUploadDate)
+            certificateUploadDate = concatListToStringForced(listOfCertificateUploadDate)
             return numSignedCerts, certificateIds, certificateBody, certificateStatus, certificateUploadDate
         else:
             return 0, "EMPTY", "EMPTY", "EMPTY", "EMPTY"
