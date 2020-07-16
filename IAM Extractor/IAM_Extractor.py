@@ -685,10 +685,11 @@ class User:
         if listOfPolicies != "EMPTY":
             AWS_POLICY_SET = set(AWS_POLICY_NAMES)
             customerManagedPolicies = (item for item in listOfPolicies if item not in AWS_POLICY_SET)
+            customerManagedPolicies = concatListToString(customerManagedPolicies)
             if not customerManagedPolicies:
                 return "EMPTY"
             else:
-                return concatListToString(customerManagedPolicies)
+                return customerManagedPolicies
         else:
             return "EMPTY"
 
