@@ -826,12 +826,34 @@ class Groups:
         allMyManagedPolicies = response['AttachedPolicies']
         if len(allMyManagedPolicies):
             managedPoliciesPolicyName = extractValueFromListDictionaryPair(allMyManagedPolicies, 'PolicyName')
-            return concatListToString(managedPoliciesPolicyName)
+            return managedPoliciesPolicyName
+        else:
+            return "EMPTY"
+
+    def get_AWS_managed_policies(self, listOfPolicies):
+        if listOfPolicies != "EMPTY":
+            awsManagedPolicies = list(set(AWS_POLICY_NAMES).intersection(listOfPolicies))
+            if not awsManagedPolicies:
+                return "EMPTY"
+            else:
+                return concatListToString(awsManagedPolicies)
+        else:
+            return "EMPTY"
+
+    def get_customer_managed_policies(self, listOfPolicies):
+        if listOfPolicies != "EMPTY":
+            AWS_POLICY_SET = set(AWS_POLICY_NAMES)
+            customerManagedPolicies = (item for item in listOfPolicies if item not in AWS_POLICY_SET)
+            customerManagedPolicies = concatListToString(customerManagedPolicies)
+            if not customerManagedPolicies:
+                return "EMPTY"
+            else:
+                return customerManagedPolicies
         else:
             return "EMPTY"
 
     def list_all_groups_to_csv(self, response):
-        writer.writerow(['Group Name', 'Group ID', 'Group Arn', 'Group Create Date', 'Group Inline Policies', 'Group Managed Policies'])
+        writer.writerow(['Group Name', 'Group ID', 'Group Arn', 'Group Create Date', 'Group Inline Policies', 'Group AWS Managed Policies', 'Group Customer Managed Policies'])
         allGroups = response['Groups']
         if len(response):
             for i in allGroups:
@@ -843,10 +865,12 @@ class Groups:
                 groupInlinePolicies = self.list_of_group_inline_policies(groupName)
                 # Managed Policies
                 groupManagedPolicies = self.list_of_group_managed_policies(groupName)
+                groupAWSManagedPolicies = self.get_AWS_managed_policies(groupManagedPolicies)
+                groupCustomerManagedPolicies = self.get_customer_managed_policies(groupManagedPolicies)
                 
-                writer.writerow([groupName, groupId, groupArn, groupCreateDate, groupInlinePolicies, groupManagedPolicies])
+                writer.writerow([groupName, groupId, groupArn, groupCreateDate, groupInlinePolicies, groupAWSManagedPolicies, groupCustomerManagedPolicies])
         else:
-            writer.writerow(['EMPTY']*6)
+            writer.writerow(['EMPTY']*7)
         writer.writerow([]) # write a empty row at end
 
 
