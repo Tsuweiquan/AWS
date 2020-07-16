@@ -674,14 +674,21 @@ class User:
     def get_AWS_managed_policies(self, listOfPolicies):
         if listOfPolicies != "EMPTY":
             awsManagedPolicies = list(set(AWS_POLICY_NAMES).intersection(listOfPolicies))
-            return concatListToString(awsManagedPolicies)
+            if not awsManagedPolicies:
+                return "EMPTY"
+            else:
+                return concatListToString(awsManagedPolicies)
         else:
             return "EMPTY"
 
     def get_customer_managed_policies(self, listOfPolicies):
         if listOfPolicies != "EMPTY":
-            customerManagedPolicies = list(listOfPolicies) - (list(set(AWS_POLICY_NAMES).intersection(listOfPolicies)))
-            return concatListToString(customerManagedPolicies)
+            AWS_POLICY_SET = set(AWS_POLICY_NAMES)
+            customerManagedPolicies = (item for item in listOfPolicies if item not in AWS_POLICY_SET)
+            if not customerManagedPolicies:
+                return "EMPTY"
+            else:
+                return concatListToString(customerManagedPolicies)
         else:
             return "EMPTY"
 
