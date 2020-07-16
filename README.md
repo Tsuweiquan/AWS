@@ -15,3 +15,26 @@ The IAM Info Extractor will extract IAM Users, Groups and Permission Sets inform
 Upon executing the script by using `python3 IAM_Extractor.py`, the program will prompt for an filename for the csv output file.
  
 
+## Installation/Setup for IAM_Extractor.py
+
+yum install python3
+yum install python3-pip
+pip3 install boto3
+
+// Set the AWS environment variables
+export AWS_ACCESS_KEY_ID="ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+export AWS_SECRET_ACCESS_KEY="ABCDEFGHIJKLMNOPQRSTUVWXYZ+ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+export AWS_SESSION_TOKEN="ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+
+python3 IAM_Extractor.py
+/> Input CSV File ma,e:
+MyOutputFileName
+/> Beginning to obtain user info...
+/> Obtained Users Info Successfully!
+/> Extracted User Info from AWS IAM Successfully!
+/> Beginning to obtain group info...
+/> Obtained Groups Info Successfully!
+/> Extracted Group Info from AWS IAM Successfully!
+/> Beginning to obtain Policies info...
+/> Saved to MyOutputFileName.csv
+/> Extraction Complete
