@@ -17,7 +17,7 @@ import boto3
 import csv
 
 MAXIMUM_ITEMS = 300
-FILENAME = "EXTRACT_IAM_INFO_NTUC_FoodFare.csv"
+FILENAME = "EXTRACT_IAM_INFO.csv"
 # https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/iam.html
 
 def TruncateLastTwoCharacters (input):
