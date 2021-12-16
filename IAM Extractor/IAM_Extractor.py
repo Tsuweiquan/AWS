@@ -4,7 +4,7 @@
 import boto3
 import csv
 
-MAX_ITEMS = 300
+MAX_ITEMS = 500
 
 AWS_POLICY_NAMES = [
     'APIGatewayServiceRolePolicy', 
@@ -920,8 +920,18 @@ class Policies:
         writer.writerow([])
 
 
-# class Roles:
-
+class Roles:
+    def __init__(self, client, csvWriter):
+        self.client = client
+        self.csvWriter = csvWriter
+    
+    def list_all_roles(self):
+        response = self.client.list_roles(
+            PathPrefix='/',
+            MaxItems=MAX_ITEMS
+        )
+        return response
+        
 
 
 if __name__ == "__main__":
@@ -931,25 +941,30 @@ if __name__ == "__main__":
     FILENAME = FILENAME + ".csv"
     with open(FILENAME, 'w', newline='') as csvfile:
         writer = csv.writer(csvfile)
-        print('Beginning to obtain user info...')
-        user = User(client, writer)
-        allUsers = user.list_all_users()
-        print('Obtained Users Info Successfully!')
-        user.list_all_users_info_to_csv(allUsers)
-        print('Extracted User Info from AWS IAM Successfully!')
+        # print('Beginning to obtain user info...')
+        # user = User(client, writer)
+        # allUsers = user.list_all_users()
+        # print('Obtained Users Info Successfully!')
+        # user.list_all_users_info_to_csv(allUsers)
+        # print('Extracted User Info from AWS IAM Successfully!')
 
-        print('Beginning to obtain group info...')
-        groups = Groups(client, writer)
-        allGroups = groups.list_all_groups()
-        print('Obtained Groups Info Successfully!')
-        groups.list_all_groups_to_csv(allGroups)
-        print('Extracted Group Info from AWS IAM Successfully!')
+        # print('Beginning to obtain group info...')
+        # groups = Groups(client, writer)
+        # allGroups = groups.list_all_groups()
+        # print('Obtained Groups Info Successfully!')
+        # groups.list_all_groups_to_csv(allGroups)
+        # print('Extracted Group Info from AWS IAM Successfully!')
 
-        print('Beginning to obtain Policies info...')
-        policies = Policies(client, writer)
-        allPolicies = policies.list_all_local_policies()
-        policies.list_all_local_policies_to_csv(allPolicies)
-        print('Extracted Policies Info from AWS IAM Successfully!')
+        # print('Beginning to obtain Policies info...')
+        # policies = Policies(client, writer)
+        # allPolicies = policies.list_all_local_policies()
+        # policies.list_all_local_policies_to_csv(allPolicies)
+        # print('Extracted Policies Info from AWS IAM Successfully!')
+        
+        print ("Beginning to obtain Roles info...")
+        roles = Roles(client, writer)
+        allRoles = roles.list_all_roles()
+        print (allRoles)
 
     print("Saved to " + FILENAME)
     print ("Extraction Complete")
