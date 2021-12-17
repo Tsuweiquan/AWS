@@ -628,6 +628,17 @@ class User:
             MaxItems=MAX_ITEMS
         )
         return response
+    
+    def list_all_users_arn(self):
+        response = self.client.list_users(
+            # PathPrefix=PATH_PREFIX,
+            # Marker=MARKER,
+            MaxItems=MAX_ITEMS
+        )
+        allUsersArn=[]
+        for i in response['Users']:
+            allUsersArn.append(i['Arn'])
+        return allUsersArn
 
     def list_groups_for_user(self, username):
         response = client.list_groups_for_user(
@@ -790,6 +801,15 @@ class User:
             writer.writerow(['EMPTY']*24)
 
         writer.writerow([])   # Write an empty row at end
+        
+    def return_iam_user_policies(self, userName):
+        myInlinePolicies = self.list_user_inline_policies(userName)
+        myManagedPolicies = self.list_user_managed_policies(userName)
+        # myAWSManagedPolicies = self.get_AWS_managed_policies(myManagedPolicies)
+        # myCustomerManagedPolicies = self.get_customer_managed_policies(myManagedPolicies)
+        # concatedPolicies = myInlinePolicies + myAWSManagedPolicies + myCustomerManagedPolicies
+        concatedPolicies = myInlinePolicies + myManagedPolicies
+        return concatedPolicies
    
 class Groups:
     def __init__(self, client, csvWriter):
@@ -873,8 +893,6 @@ class Groups:
             writer.writerow(['EMPTY']*7)
         writer.writerow([]) # write a empty row at end
 
-
-
 class Policies:
     def __init__(self, client, csvWriter):
         self.client = client
@@ -883,6 +901,17 @@ class Policies:
     def list_all_local_policies(self):
         response = client.list_policies(
             Scope='Local',
+            OnlyAttached=False,
+            # PathPrefix='string',
+            # PolicyUsageFilter='PermissionsPolicy'|'PermissionsBoundary',
+            # Marker='string',
+            MaxItems=MAX_ITEMS
+        )
+        return response
+    
+    def list_all_policies(self):
+        response = client.list_policies(
+            Scope='All',
             OnlyAttached=False,
             # PathPrefix='string',
             # PolicyUsageFilter='PermissionsPolicy'|'PermissionsBoundary',
@@ -919,7 +948,44 @@ class Policies:
             writer.writerow(["EMPTY"]*5)
         writer.writerow([])
 
-
+    
+    def list_all_policies_to_user_mapping(self, allPolicies, allUsers):
+        writer.writerow(["Policy Name", "IAM Users holding this policy"])
+        allUsers = allUsers['Users']
+        getUserName = []
+        for each in allUsers:
+            getUserName.append(each['UserName'])
+            
+        allPolicies = allPolicies['Policies']
+        getPolicyNames = []
+        for each in allPolicies:
+            getPolicyNames.append(each['PolicyName'])
+                
+        # print (getPolicyNames)
+        # print (getUserName)
+        # return
+        count = 0
+        for i in getPolicyNames:
+            count = count + 1
+            print (str(count) + '/' + str(len(getPolicyNames)))
+            listOfUsers = []
+            userAttachedPolicies = []
+            for j in getUserName:
+                response = client.list_attached_user_policies(
+                    UserName=j,
+                    MaxItems=MAX_ITEMS
+                )
+                if 'AttachedPolicies' in response:
+                    listOfAttachedPolicies = response['AttachedPolicies']
+                    for k in listOfAttachedPolicies:
+                        userAttachedPolicies.append(k['PolicyName'])
+                    
+                    if (i in userAttachedPolicies):
+                        listOfUsers.append(j)
+    
+            UserList = concatListToString(listOfUsers)
+            writer.writerow([i, UserList])
+                
 class Roles:
     def __init__(self, client, csvWriter):
         self.client = client
@@ -987,7 +1053,7 @@ if __name__ == "__main__":
     FILENAME = FILENAME + ".csv"
     with open(FILENAME, 'w', newline='') as csvfile:
         writer = csv.writer(csvfile)
-        print('Beginning to obtain user info...')
+        # print('Beginning to obtain user info...')
         user = User(client, writer)
         allUsers = user.list_all_users()
         print('Obtained Users Info Successfully!')
@@ -1003,14 +1069,18 @@ if __name__ == "__main__":
 
         print('Beginning to obtain Policies info...')
         policies = Policies(client, writer)
-        allPolicies = policies.list_all_local_policies()
-        policies.list_all_local_policies_to_csv(allPolicies)
+        allLocalPolicies = policies.list_all_local_policies()
+        policies.list_all_local_policies_to_csv(allLocalPolicies)
         print('Extracted Policies Info from AWS IAM Successfully!')
         
-        roles = Roles(client, writer)
-        print ("Beginning to obtain Roles info...")
-        roles.get_all_roles_to_policies()
-        print('Extracted Roles Info from AWS IAM Successfully!')
+        print('Beginning to obtain Users to Policies mapping info...')
+        allPolicies=policies.list_all_policies()
+        policies.list_all_policies_to_user_mapping(allPolicies, allUsers)
+        
+        # roles = Roles(client, writer)
+        # print ("Beginning to obtain Roles info...")
+        # roles.get_all_roles_to_policies()
+        # print('Extracted Roles Info from AWS IAM Successfully!')
         
 
     print("Saved to " + FILENAME)
