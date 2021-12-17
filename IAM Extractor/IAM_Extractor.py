@@ -931,8 +931,54 @@ class Roles:
             MaxItems=MAX_ITEMS
         )
         return response
-        
 
+    def return_all_role_names(self):
+        response = self.client.list_roles(
+            PathPrefix='/',
+            MaxItems=MAX_ITEMS
+        )
+        roleNames = []
+        listOfRoles = response['Roles']
+        for i in listOfRoles:
+            roleNames.append(i['RoleName'])
+        return roleNames
+    
+    def list_role_inline_policies(self, roleName):
+        response = self.client.list_role_policies(
+            RoleName=roleName,
+            MaxItems=MAX_ITEMS
+        )
+        if (response['IsTruncated'] == False):
+            return response['PolicyNames']
+        else:
+            return ["Truncated List, Error"]
+    
+    def list_role_managed_policies(self, roleName):
+        response = self.client.list_attached_role_policies(
+            RoleName=roleName,
+            MaxItems=MAX_ITEMS
+        )
+        if (response['IsTruncated'] == False):
+            listOfPolicyName = []
+            listOfPolicies = response['AttachedPolicies']
+            for i in listOfPolicies:
+                listOfPolicyName.append(i['PolicyName'])
+            return listOfPolicyName
+        else:
+            return ["Truncated List, Error"]
+
+    def get_all_roles_to_policies(self):
+        writer.writerow(['Role Name', 'Inline Policies', 'Managed Policies'])
+        allRoles = self.return_all_role_names()
+        print ("Number of Roles: " + str(len(allRoles)))
+        count = 0
+        for i in allRoles:
+            count = count + 1
+            inlinePolicies = self.list_role_inline_policies(i)
+            managedPolicies = self.list_role_managed_policies(i)
+            writer.writerow([i, concatListToString(inlinePolicies), concatListToString(managedPolicies)])
+            print (str(count) + '/' + str(len(allRoles)))
+        writer.writerow([])
 
 if __name__ == "__main__":
     client = boto3.client('iam')
@@ -961,10 +1007,11 @@ if __name__ == "__main__":
         # policies.list_all_local_policies_to_csv(allPolicies)
         # print('Extracted Policies Info from AWS IAM Successfully!')
         
-        print ("Beginning to obtain Roles info...")
         roles = Roles(client, writer)
-        allRoles = roles.list_all_roles()
-        print (allRoles)
+        print ("Beginning to obtain Roles info...")
+        roles.get_all_roles_to_policies()
+        # print (allRoles)
+        
 
     print("Saved to " + FILENAME)
     print ("Extraction Complete")
