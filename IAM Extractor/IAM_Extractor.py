@@ -949,42 +949,42 @@ class Policies:
         writer.writerow([])
 
     
-    def list_all_policies_to_user_mapping(self, allPolicies, allUsers):
-        writer.writerow(["Policy Name", "IAM Users holding this policy"])
-        allUsers = allUsers['Users']
-        getUserName = []
-        for each in allUsers:
-            getUserName.append(each['UserName'])
+    # def list_all_policies_to_user_mapping(self, allPolicies, allUsers):
+        # writer.writerow(["Policy Name", "IAM Users holding this policy"])
+        # allUsers = allUsers['Users']
+        # getUserName = []
+        # for each in allUsers:
+        #     getUserName.append(each['UserName'])
             
-        allPolicies = allPolicies['Policies']
-        getPolicyNames = []
-        for each in allPolicies:
-            getPolicyNames.append(each['PolicyName'])
+        # allPolicies = allPolicies['Policies']
+        # getPolicyNames = []
+        # for each in allPolicies:
+        #     getPolicyNames.append(each['PolicyName'])
                 
-        # print (getPolicyNames)
-        # print (getUserName)
-        # return
-        count = 0
-        for i in getPolicyNames:
-            count = count + 1
-            print (str(count) + '/' + str(len(getPolicyNames)))
-            listOfUsers = []
-            userAttachedPolicies = []
-            for j in getUserName:
-                response = client.list_attached_user_policies(
-                    UserName=j,
-                    MaxItems=MAX_ITEMS
-                )
-                if 'AttachedPolicies' in response:
-                    listOfAttachedPolicies = response['AttachedPolicies']
-                    for k in listOfAttachedPolicies:
-                        userAttachedPolicies.append(k['PolicyName'])
+        # # print (getPolicyNames)
+        # # print (getUserName)
+        # # return
+        # count = 0
+        # for i in getPolicyNames:
+        #     count = count + 1
+        #     print (str(count) + '/' + str(len(getPolicyNames)))
+        #     listOfUsers = []
+        #     userAttachedPolicies = []
+        #     for j in getUserName:
+        #         response = client.list_attached_user_policies(
+        #             UserName=j,
+        #             MaxItems=MAX_ITEMS
+        #         )
+        #         if 'AttachedPolicies' in response:
+        #             listOfAttachedPolicies = response['AttachedPolicies']
+        #             for k in listOfAttachedPolicies:
+        #                 userAttachedPolicies.append(k['PolicyName'])
                     
-                    if (i in userAttachedPolicies):
-                        listOfUsers.append(j)
+        #             if (i in userAttachedPolicies):
+        #                 listOfUsers.append(j)
     
-            UserList = concatListToString(listOfUsers)
-            writer.writerow([i, UserList])
+        #     UserList = concatListToString(listOfUsers)
+        #     writer.writerow([i, UserList])
                 
 class Roles:
     def __init__(self, client, csvWriter):
@@ -1073,9 +1073,9 @@ if __name__ == "__main__":
         policies.list_all_local_policies_to_csv(allLocalPolicies)
         print('Extracted Policies Info from AWS IAM Successfully!')
         
-        print('Beginning to obtain Users to Policies mapping info...')
-        allPolicies=policies.list_all_policies()
-        policies.list_all_policies_to_user_mapping(allPolicies, allUsers)
+        # print('Beginning to obtain Users to Policies mapping info...')
+        # allPolicies=policies.list_all_policies()
+        # policies.list_all_policies_to_user_mapping(allPolicies, allUsers)
         
         # roles = Roles(client, writer)
         # print ("Beginning to obtain Roles info...")
